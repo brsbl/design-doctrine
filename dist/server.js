@@ -12,11 +12,11 @@ var __export = (target, all) => {
 
 // server.ts
 import { execFile } from "node:child_process";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { readdir, readFile, stat } from "node:fs/promises";
 
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -14542,173 +14542,135 @@ function defineRpcContract(contract) {
   return contract;
 }
 var stringListSchema = external_exports.array(external_exports.string());
-var evidenceSourceSchema = external_exports.object({
-  type: external_exports.string(),
-  store: external_exports.string(),
-  thread_id: external_exports.string().nullable(),
-  source_keys: stringListSchema,
-  project_id: external_exports.string().nullable()
-});
-var evidenceSchema = external_exports.object({
-  id: external_exports.string(),
-  source: evidenceSourceSchema,
-  signal: external_exports.string(),
-  stance: external_exports.string(),
-  observed_at: external_exports.string(),
-  summary: external_exports.string(),
-  excerpt: external_exports.string().nullable(),
-  content_sha256: external_exports.string(),
-  doctrine_version_seen: external_exports.string().nullable(),
-  episode_id: external_exports.string(),
-  episode_source_keys: stringListSchema
-});
-var exceptionSchema = external_exports.object({
-  id: external_exports.string(),
-  condition: external_exports.string(),
-  use_instead: external_exports.string(),
-  rationale: external_exports.string(),
-  evidence_refs: stringListSchema
-});
-var relationshipSchema = external_exports.object({
-  type: external_exports.string(),
-  target_id: external_exports.string(),
-  resolution: external_exports.string().nullable()
-});
-var lifecycleSchema = external_exports.object({
-  status: external_exports.string(),
-  created_at: external_exports.string(),
-  updated_at: external_exports.string(),
-  activated_at: external_exports.string().nullable(),
-  last_reviewed_at: external_exports.string().nullable(),
-  review_after: external_exports.string().nullable(),
-  approved_by: external_exports.string().nullable(),
-  decision_note: external_exports.string()
-});
 var ruleSchema = external_exports.object({
-  schema_version: external_exports.number().int(),
-  id: external_exports.string(),
-  revision: external_exports.number().int(),
-  title: external_exports.string(),
-  kind: external_exports.string(),
-  strength: external_exports.string(),
-  statement: external_exports.string(),
-  rationale: external_exports.string(),
-  guidance: external_exports.object({
-    prefer: stringListSchema,
-    avoid: stringListSchema
-  }),
-  classification: external_exports.object({
-    primary: external_exports.string(),
-    secondary: stringListSchema,
-    pattern_categories: stringListSchema
-  }),
-  applicability: external_exports.object({
-    products: stringListSchema,
-    activities: stringListSchema,
-    artifacts: stringListSchema,
-    surfaces: stringListSchema,
-    contexts: stringListSchema,
-    when: stringListSchema,
-    not_when: stringListSchema
-  }),
-  exceptions: external_exports.array(exceptionSchema),
-  relationships: external_exports.array(relationshipSchema),
-  evidence: external_exports.array(evidenceSchema),
-  confidence: external_exports.object({
-    level: external_exports.string(),
-    basis: external_exports.object({
-      explicit_user_signals: external_exports.number().int(),
-      supporting_episodes: external_exports.number().int(),
-      challenging_episodes: external_exports.number().int(),
-      distinct_threads: external_exports.number().int(),
-      distinct_projects: external_exports.number().int()
-    }),
-    assessed_at: external_exports.string(),
-    note: external_exports.string()
-  }),
-  lifecycle: lifecycleSchema,
-  retrieval: external_exports.object({
-    keywords: stringListSchema,
-    aliases: stringListSchema,
-    positive_examples: stringListSchema,
-    negative_examples: stringListSchema
-  }),
-  verification: external_exports.object({
-    method: external_exports.string(),
-    checks: stringListSchema
-  }),
+  id: external_exports.string().regex(/^ddr_\d{3,}$/),
+  title: external_exports.string().min(3),
+  kind: external_exports.enum(["principle", "standard", "guideline", "taste", "anti_pattern"]),
+  strength: external_exports.enum(["required", "default", "preference", "warning"]),
+  confidence: external_exports.enum(["low", "medium", "high"]),
+  status: external_exports.enum(["active", "conflicted", "retired"]),
+  domain: external_exports.string().regex(/^[a-z-]+\.[a-z-]+$/),
+  products: stringListSchema.min(1),
+  activities: stringListSchema.min(1),
+  artifacts: stringListSchema.min(1),
+  surfaces: stringListSchema,
+  relations: stringListSchema,
+  supporting_episodes: external_exports.number().int().nonnegative(),
+  challenging_episodes: external_exports.number().int().nonnegative(),
+  updated: external_exports.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  statement: external_exports.string().min(10),
+  why: external_exports.string().min(10),
+  prefer: stringListSchema.min(1),
+  avoid: stringListSchema.min(1),
+  use_when: stringListSchema.min(1),
+  not_when: stringListSchema,
+  exceptions: stringListSchema,
+  evidence: stringListSchema.min(1),
+  checks: stringListSchema.min(1),
   canonical_path: external_exports.string()
-});
-var taxonomyLeafSchema = external_exports.object({
-  id: external_exports.string(),
-  name: external_exports.string()
-});
-var taxonomyRootSchema = external_exports.object({
-  id: external_exports.string(),
-  name: external_exports.string(),
-  definition: external_exports.string(),
-  leaves: external_exports.array(taxonomyLeafSchema)
-});
-var taxonomySchema = external_exports.object({
-  schema_version: external_exports.number().int(),
-  updated_at: external_exports.string(),
-  id_aliases: external_exports.array(external_exports.unknown()),
-  deprecations: external_exports.array(external_exports.unknown()),
-  roots: external_exports.array(taxonomyRootSchema),
-  pattern_categories: stringListSchema,
-  products: external_exports.array(taxonomyLeafSchema),
-  activities: stringListSchema,
-  artifacts: stringListSchema
-});
-var manifestSchema = external_exports.object({
-  generated_at: external_exports.string(),
-  corpus_sha256: external_exports.string(),
-  rule_count: external_exports.number().int(),
-  status_counts: external_exports.record(external_exports.string(), external_exports.number().int())
 });
 var gitSchema = external_exports.object({
   available: external_exports.boolean(),
   branch: external_exports.string().nullable(),
   commit: external_exports.string().nullable(),
   full_commit: external_exports.string().nullable(),
-  committed_at: external_exports.string().nullable(),
   dirty: external_exports.boolean(),
   changed_files: external_exports.number().int()
 });
 var librarySchema = external_exports.object({
   root: external_exports.string(),
   loaded_at: external_exports.string(),
-  taxonomy: taxonomySchema,
   rules: external_exports.array(ruleSchema),
+  domains: stringListSchema,
   status_counts: external_exports.record(external_exports.string(), external_exports.number().int()),
-  manifest: manifestSchema.nullable(),
   git: gitSchema
 });
 var rpcContract = defineRpcContract({
-  getLibrary: {
-    input: external_exports.null(),
-    output: librarySchema
-  }
+  getLibrary: { input: external_exports.null(), output: librarySchema }
 });
 function expandPath(input) {
   if (input === "~") return homedir();
   if (input.startsWith("~/")) return join(homedir(), input.slice(2));
   return resolve(input);
 }
-async function readJson(path) {
-  return JSON.parse(await readFile(path, "utf8"));
-}
 async function listRuleFiles(root) {
   const rulesRoot = join(root, "rules");
   const domains = await readdir(rulesRoot, { withFileTypes: true });
   const files = await Promise.all(
     domains.filter((entry) => entry.isDirectory()).map(async (domain2) => {
-      const domainRoot = join(rulesRoot, domain2.name);
-      const entries = await readdir(domainRoot, { withFileTypes: true });
-      return entries.filter((entry) => entry.isFile() && entry.name.endsWith(".json")).map((entry) => join(domainRoot, entry.name));
+      const directory = join(rulesRoot, domain2.name);
+      return (await readdir(directory, { withFileTypes: true })).filter((entry) => entry.isFile() && entry.name.endsWith(".md")).map((entry) => join(directory, entry.name));
     })
   );
   return files.flat().sort();
+}
+function parseValue(value) {
+  const trimmed = value.trim();
+  if (trimmed.startsWith("[") || trimmed.startsWith('"')) {
+    return JSON.parse(trimmed);
+  }
+  if (/^\d+$/.test(trimmed)) return Number(trimmed);
+  return trimmed;
+}
+function parseSections(body) {
+  const lines = body.trim().split(/\r?\n/);
+  const titleLine = lines.shift();
+  if (!titleLine?.startsWith("# ")) throw new Error("Rule needs one H1 title");
+  const sections = /* @__PURE__ */ new Map();
+  const statement = [];
+  let current = null;
+  for (const line of lines) {
+    if (line.startsWith("## ")) {
+      current = line.slice(3).trim().toLocaleLowerCase();
+      sections.set(current, []);
+      continue;
+    }
+    if (current) sections.get(current)?.push(line);
+    else statement.push(line);
+  }
+  return {
+    title: titleLine.slice(2).trim(),
+    statement: statement.join("\n").trim(),
+    sections
+  };
+}
+function sectionText(sections, name) {
+  return (sections.get(name) ?? []).join("\n").trim();
+}
+function sectionList(sections, name) {
+  return (sections.get(name) ?? []).filter((line) => line.startsWith("- ")).map((line) => line.slice(2).trim()).filter(Boolean);
+}
+async function parseRule(path, root) {
+  const source = await readFile(path, "utf8");
+  const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]+)$/);
+  if (!match) throw new Error(`${relative(root, path)}: missing frontmatter`);
+  const metadata = {};
+  for (const line of match[1].split(/\r?\n/)) {
+    const separator = line.indexOf(":");
+    if (separator < 1) throw new Error(`${relative(root, path)}: invalid frontmatter`);
+    metadata[line.slice(0, separator).trim()] = parseValue(
+      line.slice(separator + 1)
+    );
+  }
+  const { title, statement, sections } = parseSections(match[2]);
+  try {
+    return ruleSchema.parse({
+      ...metadata,
+      title,
+      statement,
+      why: sectionText(sections, "why"),
+      prefer: sectionList(sections, "prefer"),
+      avoid: sectionList(sections, "avoid"),
+      use_when: sectionList(sections, "use when"),
+      not_when: sectionList(sections, "do not use when"),
+      exceptions: sectionList(sections, "exceptions"),
+      evidence: sectionList(sections, "evidence"),
+      checks: sectionList(sections, "check"),
+      canonical_path: relative(root, path)
+    });
+  } catch (error51) {
+    throw new Error(`${relative(root, path)}: ${String(error51)}`);
+  }
 }
 async function runGit(root, args) {
   const result = await execFileAsync("git", ["-C", root, ...args], {
@@ -14719,10 +14681,9 @@ async function runGit(root, args) {
 }
 async function readGit(root) {
   try {
-    const [branch, fullCommit, committedAt, porcelain] = await Promise.all([
+    const [branch, fullCommit, porcelain] = await Promise.all([
       runGit(root, ["branch", "--show-current"]),
       runGit(root, ["rev-parse", "HEAD"]),
-      runGit(root, ["show", "-s", "--format=%cI", "HEAD"]),
       runGit(root, ["status", "--porcelain=v1", "--untracked-files=normal"])
     ]);
     const changedFiles = porcelain ? porcelain.split("\n").filter(Boolean).length : 0;
@@ -14731,7 +14692,6 @@ async function readGit(root) {
       branch: branch || null,
       commit: fullCommit.slice(0, 8) || null,
       full_commit: fullCommit || null,
-      committed_at: committedAt || null,
       dirty: changedFiles > 0,
       changed_files: changedFiles
     };
@@ -14741,43 +14701,56 @@ async function readGit(root) {
       branch: null,
       commit: null,
       full_commit: null,
-      committed_at: null,
       dirty: false,
       changed_files: 0
     };
   }
 }
+function validateRelations(rules) {
+  const byId = new Map(rules.map((rule) => [rule.id, rule]));
+  for (const rule of rules) {
+    if (rule.evidence.length !== rule.supporting_episodes + rule.challenging_episodes) {
+      throw new Error(`${rule.id}: episode counts must match the Evidence lines`);
+    }
+    if (rule.status === "conflicted" && rule.challenging_episodes === 0) {
+      throw new Error(`${rule.id}: conflicted rules need challenging evidence`);
+    }
+    for (const relation of rule.relations) {
+      const separator = relation.indexOf(":");
+      const type = relation.slice(0, separator);
+      const targetId = relation.slice(separator + 1);
+      const target = byId.get(targetId);
+      if (separator < 1 || !target) throw new Error(`${rule.id}: invalid relation ${relation}`);
+      if (type === "supersedes" && target.status !== "retired") {
+        throw new Error(`${rule.id}: superseded rule ${targetId} must be retired`);
+      }
+    }
+  }
+}
 async function loadDoctrine(rootInput = DEFAULT_DOCTRINE_PATH) {
   const root = expandPath(rootInput);
-  const ruleFiles = await listRuleFiles(root);
-  const [taxonomyValue, ruleValues, manifestValue, git] = await Promise.all([
-    readJson(join(root, "taxonomy.json")),
-    Promise.all(ruleFiles.map((path) => readJson(path))),
-    readJson(join(root, "generated", "manifest.json")).catch(() => null),
+  const files = await listRuleFiles(root);
+  const [rules, git] = await Promise.all([
+    Promise.all(files.map((path) => parseRule(path, root))),
     readGit(root)
   ]);
-  const taxonomy = taxonomySchema.parse(taxonomyValue);
-  const rules = ruleValues.map(
-    (value, index) => ruleSchema.parse({
-      ...value,
-      canonical_path: relative(root, ruleFiles[index])
-    })
-  ).sort(
-    (left, right) => left.classification.primary.localeCompare(
-      right.classification.primary
-    ) || left.title.localeCompare(right.title)
-  );
+  const ids = /* @__PURE__ */ new Set();
+  for (const rule of rules) {
+    if (ids.has(rule.id)) throw new Error(`Duplicate rule ID: ${rule.id}`);
+    ids.add(rule.id);
+  }
+  validateRelations(rules);
+  rules.sort((left, right) => left.domain.localeCompare(right.domain) || left.title.localeCompare(right.title));
   const statusCounts = rules.reduce((counts, rule) => {
-    counts[rule.lifecycle.status] = (counts[rule.lifecycle.status] ?? 0) + 1;
+    counts[rule.status] = (counts[rule.status] ?? 0) + 1;
     return counts;
   }, {});
   return librarySchema.parse({
     root,
     loaded_at: (/* @__PURE__ */ new Date()).toISOString(),
-    taxonomy,
     rules,
+    domains: [...new Set(rules.map((rule) => rule.domain.split(".")[0]))].sort(),
     status_counts: statusCounts,
-    manifest: manifestValue ? manifestSchema.parse(manifestValue) : null,
     git
   });
 }
@@ -14785,45 +14758,38 @@ function searchableText(rule) {
   return [
     rule.id,
     rule.title,
+    rule.statement,
+    rule.why,
     rule.kind,
     rule.strength,
-    rule.statement,
-    rule.rationale,
-    rule.classification.primary,
-    ...rule.classification.secondary,
-    ...rule.classification.pattern_categories,
-    ...rule.applicability.products,
-    ...rule.applicability.activities,
-    ...rule.applicability.artifacts,
-    ...rule.applicability.surfaces,
-    ...rule.applicability.contexts,
-    ...rule.applicability.when,
-    ...rule.applicability.not_when,
-    ...rule.guidance.prefer,
-    ...rule.guidance.avoid,
-    ...rule.retrieval.keywords,
-    ...rule.retrieval.aliases,
-    ...rule.retrieval.positive_examples,
-    ...rule.retrieval.negative_examples,
-    ...rule.verification.checks,
-    ...rule.evidence.map((item) => item.summary)
+    rule.confidence,
+    rule.domain,
+    ...rule.products,
+    ...rule.activities,
+    ...rule.artifacts,
+    ...rule.surfaces,
+    ...rule.prefer,
+    ...rule.avoid,
+    ...rule.use_when,
+    ...rule.not_when,
+    ...rule.exceptions,
+    ...rule.evidence,
+    ...rule.checks
   ].join("\n").toLocaleLowerCase();
 }
-function searchDoctrine(rules, query, includeAllStatuses = false) {
+function searchDoctrine(rules, query, includeInactive = false) {
   const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-  return rules.filter(
-    (rule) => includeAllStatuses || rule.lifecycle.status === "active"
-  ).filter((rule) => {
-    if (terms.length === 0) return true;
+  const confidence = { high: 3, medium: 2, low: 1 };
+  return rules.filter((rule) => includeInactive || rule.status === "active").map((rule) => {
     const text = searchableText(rule);
-    return terms.every((term) => text.includes(term));
-  }).slice(0, SEARCH_RESULT_LIMIT);
+    const matches = terms.filter((term) => text.includes(term)).length;
+    return { rule, score: matches * 10 + confidence[rule.confidence] };
+  }).filter(({ score }) => terms.length === 0 || score >= terms.length * 10).sort((left, right) => right.score - left.score || left.rule.id.localeCompare(right.rule.id)).slice(0, SEARCH_RESULT_LIMIT).map(({ rule }) => rule);
 }
 async function watchFingerprint(rootInput) {
   const root = expandPath(rootInput);
   const paths = [
-    join(root, "taxonomy.json"),
-    join(root, "generated", "manifest.json"),
+    ...await listRuleFiles(root),
     join(root, ".git", "HEAD"),
     join(root, ".git", "index")
   ];
@@ -14843,59 +14809,29 @@ function sleep(ms, signal) {
   if (signal.aborted) return Promise.resolve();
   return new Promise((resolveSleep) => {
     const timer = setTimeout(resolveSleep, ms);
-    signal.addEventListener(
-      "abort",
-      () => {
-        clearTimeout(timer);
-        resolveSleep();
-      },
-      { once: true }
-    );
+    signal.addEventListener("abort", () => {
+      clearTimeout(timer);
+      resolveSleep();
+    }, { once: true });
   });
 }
-function librarySummary(library) {
-  return {
-    root: library.root,
-    rules: library.rules.length,
-    statuses: library.status_counts,
-    corpus_sha256: library.manifest?.corpus_sha256 ?? null,
-    generated_at: library.manifest?.generated_at ?? null,
-    git: library.git
-  };
-}
-function ruleSummary(rule) {
-  return {
-    id: rule.id,
-    title: rule.title,
-    status: rule.lifecycle.status,
-    domain: rule.classification.primary,
-    kind: rule.kind,
-    strength: rule.strength,
-    statement: rule.statement,
-    canonical_path: rule.canonical_path
-  };
-}
 function formatRule(rule) {
-  const evidence = rule.evidence.map((item) => {
-    const source = item.source.type === "published_summary" ? "published evidence summary" : item.source.thread_id ? `${item.source.thread_id}/${item.source.source_keys.join(",")}` : item.source.type;
-    return `- ${item.summary} (${source})`;
-  }).join("\n");
   return [
     `${rule.id} \u2014 ${rule.title}`,
-    `${rule.lifecycle.status} \xB7 ${rule.kind} \xB7 ${rule.strength} \xB7 ${rule.classification.primary}`,
+    `${rule.strength} \xB7 ${rule.confidence} confidence \xB7 ${rule.domain}`,
     "",
     rule.statement,
     "",
-    `Why: ${rule.rationale}`,
+    `Why: ${rule.why}`,
     "",
     "Prefer:",
-    ...rule.guidance.prefer.map((item) => `- ${item}`),
+    ...rule.prefer.map((item) => `- ${item}`),
     "",
     "Avoid:",
-    ...rule.guidance.avoid.map((item) => `- ${item}`),
+    ...rule.avoid.map((item) => `- ${item}`),
     "",
     "Evidence:",
-    evidence || "- None",
+    ...rule.evidence.map((item) => `- ${item}`),
     "",
     `Source: ${rule.canonical_path}`
   ].join("\n");
@@ -14909,55 +14845,35 @@ async function plugin(bb) {
     }
   });
   let cacheGeneration = 0;
-  let cachedLibrary = null;
-  let loadingLibrary = null;
-  function invalidateLibrary() {
+  let cached2 = null;
+  let loading = null;
+  function invalidate() {
     cacheGeneration += 1;
-    cachedLibrary = null;
-    loadingLibrary = null;
+    cached2 = null;
+    loading = null;
   }
   async function currentLibrary() {
-    const { doctrinePath } = await settings.get();
-    const root = expandPath(doctrinePath);
-    if (cachedLibrary?.root === root) return cachedLibrary.value;
-    if (loadingLibrary?.root === root && loadingLibrary.generation === cacheGeneration) {
-      return loadingLibrary.promise;
-    }
+    const root = expandPath((await settings.get()).doctrinePath);
+    if (cached2?.root === root) return cached2.value;
+    if (loading) return loading;
     const generation = cacheGeneration;
-    const promise2 = loadDoctrine(root);
-    loadingLibrary = { generation, root, promise: promise2 };
+    loading = loadDoctrine(root);
     try {
-      const value = await promise2;
-      if (generation === cacheGeneration) {
-        cachedLibrary = { root, value };
-      }
+      const value = await loading;
+      if (generation === cacheGeneration) cached2 = { root, value };
       return value;
     } finally {
-      if (loadingLibrary?.promise === promise2) loadingLibrary = null;
+      loading = null;
     }
   }
-  bb.rpc.register(rpcContract, {
-    getLibrary: currentLibrary
-  });
+  bb.rpc.register(rpcContract, { getLibrary: currentLibrary });
   bb.cli.register({
     name: "doctrine",
-    summary: "Browse and query the personal design doctrine",
+    summary: "Browse and search product-design rules",
     commands: [
-      {
-        name: "status",
-        summary: "Show corpus and Git status",
-        usage: "bb doctrine status [--json]"
-      },
-      {
-        name: "search",
-        summary: "Search operative rules, or all lifecycle states",
-        usage: "bb doctrine search <query> [--all] [--json]"
-      },
-      {
-        name: "show",
-        summary: "Show one complete rule",
-        usage: "bb doctrine show <rule-id> [--json]"
-      }
+      { name: "status", summary: "Show rule and Git status", usage: "bb doctrine status [--json]" },
+      { name: "search", summary: "Search current rules", usage: "bb doctrine search <query> [--all] [--json]" },
+      { name: "show", summary: "Show one rule", usage: "bb doctrine show <rule-id> [--json]" }
     ],
     async run(argv) {
       try {
@@ -14965,108 +14881,70 @@ async function plugin(bb) {
         const command = argv[0] ?? "status";
         const json2 = argv.includes("--json");
         if (command === "status") {
-          const summary = librarySummary(library);
+          const summary = {
+            root: library.root,
+            rules: library.rules.length,
+            statuses: library.status_counts,
+            git: library.git
+          };
           return {
             exitCode: 0,
             stdout: json2 ? `${JSON.stringify(summary, null, 2)}
-` : [
-              `${summary.rules} rules (${Object.entries(library.status_counts).map(([status, count]) => `${count} ${status}`).join(", ")})`,
-              library.git.available ? `Git: ${library.git.branch ?? "detached"}@${library.git.commit ?? "unknown"}${library.git.dirty ? ` \xB7 ${library.git.changed_files} changed` : " \xB7 clean"}` : "Git: unavailable",
-              `Repository: ${library.root}`
-            ].join("\n") + "\n"
+` : `${summary.rules} rules (${Object.entries(summary.statuses).map(([status, count]) => `${count} ${status}`).join(", ")})
+Repository: ${summary.root}
+`
           };
         }
         if (command === "search") {
-          const includeAll = argv.includes("--all");
           const query = argv.slice(1).filter((value) => !value.startsWith("--")).join(" ");
-          if (!query) {
-            return {
-              exitCode: 2,
-              stderr: "Usage: bb doctrine search <query> [--all] [--json]\n"
-            };
-          }
-          const results = searchDoctrine(
-            library.rules,
-            query,
-            includeAll
-          );
+          if (!query) return { exitCode: 2, stderr: "Usage: bb doctrine search <query> [--all] [--json]\n" };
+          const results = searchDoctrine(library.rules, query, argv.includes("--all"));
           return {
             exitCode: 0,
-            stdout: json2 ? `${JSON.stringify(results.map(ruleSummary), null, 2)}
-` : results.length ? `${results.map(
-              (rule) => `${rule.id} \xB7 ${rule.lifecycle.status} \xB7 ${rule.title}
-  ${rule.statement}`
-            ).join("\n\n")}
+            stdout: json2 ? `${JSON.stringify(results, null, 2)}
+` : results.length ? `${results.map((rule) => `${rule.id} \xB7 ${rule.confidence} confidence \xB7 ${rule.title}
+  ${rule.statement}`).join("\n\n")}
 ` : "No matching rules.\n"
           };
         }
         if (command === "show") {
-          const id = argv[1];
-          const rule = library.rules.find((item) => item.id === id);
-          if (!id || !rule) {
-            return {
-              exitCode: 1,
-              stderr: id ? `Rule not found: ${id}
-` : "Usage: bb doctrine show <rule-id> [--json]\n"
-            };
-          }
-          return {
-            exitCode: 0,
-            stdout: json2 ? `${JSON.stringify(rule, null, 2)}
+          const rule = library.rules.find((item) => item.id === argv[1]);
+          if (!rule) return { exitCode: 1, stderr: `Rule not found: ${argv[1] ?? ""}
+` };
+          return { exitCode: 0, stdout: json2 ? `${JSON.stringify(rule, null, 2)}
 ` : `${formatRule(rule)}
-`
-          };
+` };
         }
-        return {
-          exitCode: 2,
-          stderr: "Usage: bb doctrine <status|search|show> [arguments] [--json]\n"
-        };
+        return { exitCode: 2, stderr: "Usage: bb doctrine <status|search|show>\n" };
       } catch (error51) {
-        return {
-          exitCode: 1,
-          stderr: `${error51 instanceof Error ? error51.message : String(error51)}
-`
-        };
+        return { exitCode: 1, stderr: `${error51 instanceof Error ? error51.message : String(error51)}
+` };
       }
     }
   });
-  bb.background.service("corpus-watch", {
+  bb.background.service("rule-watch", {
     async start(signal) {
-      const initial = await settings.get();
-      let fingerprint = await watchFingerprint(initial.doctrinePath);
+      let fingerprint = await watchFingerprint((await settings.get()).doctrinePath);
       try {
         await currentLibrary();
       } catch (error51) {
-        bb.log.warn(
-          `could not warm doctrine cache: ${error51 instanceof Error ? error51.message : String(error51)}`
-        );
+        bb.log.warn(error51 instanceof Error ? error51.message : String(error51));
       }
       while (!signal.aborted) {
         await sleep(WATCH_INTERVAL_MS, signal);
         if (signal.aborted) break;
-        const nextSettings = await settings.get();
-        const nextFingerprint = await watchFingerprint(
-          nextSettings.doctrinePath
-        );
-        if (nextFingerprint !== fingerprint) {
-          fingerprint = nextFingerprint;
-          invalidateLibrary();
-          bb.realtime.publish("corpus-changed", {
-            changed_at: (/* @__PURE__ */ new Date()).toISOString()
-          });
+        const next = await watchFingerprint((await settings.get()).doctrinePath);
+        if (next !== fingerprint) {
+          fingerprint = next;
+          invalidate();
+          bb.realtime.publish("rules-changed", { changed_at: (/* @__PURE__ */ new Date()).toISOString() });
         }
       }
     }
   });
   settings.onChange(() => {
-    invalidateLibrary();
-    bb.realtime.publish("corpus-changed", {
-      changed_at: (/* @__PURE__ */ new Date()).toISOString()
-    });
-  });
-  bb.log.info("loaded");
-  bb.onDispose(() => {
-    bb.log.info("disposed");
+    invalidate();
+    bb.realtime.publish("rules-changed", { changed_at: (/* @__PURE__ */ new Date()).toISOString() });
   });
 }
 export {

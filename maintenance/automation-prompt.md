@@ -1,131 +1,63 @@
-# Maintain The Personal Design Doctrine
+# Doctrine maintenance pass
 
-Run one bounded, evidence-first maintenance pass. Learn from new bb task
-episodes without silently changing operative product-design guidance.
+One bounded pass over new bb design feedback. `governance.md` covers the rules;
+this is the procedure.
 
-## Resolve The Repository
+Limits: change at most five rule files per run. Don't touch plugin code, the
+skill, or `governance.md`. Only the user's own messages are evidence — never
+agent output, including your own.
 
-Use `bb plugin source design-doctrine --json` to resolve the installed plugin
-root. Call that directory `<root>` below. Stop if bb resolves the plugin or its
-bundled `design-doctrine` skill to a different source.
+## Steps
 
-## Scope
-
-| May change | Must not change |
-| --- | --- |
-| Candidate rules under `<root>/rules/` | Active rule statement, strength, applicability, exception, or lifecycle |
-| Append-only, directly resolvable bb evidence on an existing rule | Existing evidence or published summaries |
-| Generated views through the doctrine CLI | Bundled skill, governance, taxonomy, schema, prompt, or scripts |
-| CLI-owned local maintenance state | Automation identity, schedule, provider, model, or permissions |
-
-Never activate, reject, contest, supersede, deprecate, delete, or strengthen a
-rule. Propose prohibited changes in the run result for human review. Never edit
-`maintenance/state.json` or `.runtime/lease-receipt.json` directly.
-
-## Run
-
-1. Use `design-doctrine` in maintenance mode and the available bb task-episode
-   mining guidance.
-2. Acquire a lease:
+1. Read new feedback. The bounds are optional and default to
+   `--limit 200 --max-bytes 262144 --max-message-bytes 8192`.
 
    ```bash
-   python3 <root>/scripts/doctrine.py begin-run
+   python3 scripts/scan-history.py scan
    ```
 
-   Stop and report if another lease is active. Do not replace a stale lease
-   without human inspection.
-3. Scan the leased incremental window:
+2. Reconstruct whole task episodes around the user's own messages. Ignore
+   `[bb system]` and `[bb message ...]` relays, tool failures, and temporary
+   constraints. A relay repeating an instruction is the same episode, not a
+   second one.
+
+3. For each durable signal, take the smallest action that fits:
+
+   - nothing;
+   - add an Evidence line to an existing rule and bump `supporting_episodes`;
+   - tighten "Use when" / "Do not use when", or add an Exceptions section;
+   - write a new rule at `rules/<domain>/ddr_NNN.md`;
+   - retire a replaced rule (`status: retired`) and point its replacement at it
+     through `relations`;
+   - set `status: conflicted`, add the challenging evidence, bump
+     `challenging_episodes`, and ask the user.
+
+   Update `confidence` to match the evidence and set `updated` to today.
+
+4. A new rule needs the same frontmatter as its neighbours — `id`, `kind`,
+   `strength`, `confidence`, `status`, `domain`, `products`, `activities`,
+   `artifacts`, `surfaces`, `relations`, `supporting_episodes`,
+   `challenging_episodes`, `updated` — and the sections Why, Prefer, Avoid,
+   Use when, Do not use when, Evidence, Check.
+
+5. Keep evidence lines short and anonymous: one line per episode, describing
+   what the user asked for or corrected. Never paste transcripts, credentials,
+   private URLs, thread IDs, or message IDs.
+
+6. If nothing changed, skip to step 7. Otherwise check the result and commit:
 
    ```bash
-   python3 <root>/scripts/doctrine.py scan \
-     --limit 200 \
-     --max-bytes 524288 \
-     --max-message-bytes 32768
+   npm test && npm run typecheck && npm run build
+   git add rules && git commit -m "doctrine: <what changed>"
    ```
 
-   Save the output outside the repository. Use its `cursor_commit` and
-   `evidence_sha256` exactly. Reconstruct a truncated task episode before using
-   it as evidence.
-4. Reconstruct complete relevant task episodes around high-signal direct user
-   messages. Exclude `[bb system]` and `[bb message ...]` relays from recurrence.
-   Ignore tool failures, false verification, agent nonadherence, orchestration
-   races, and temporary constraints unless they contain durable design judgment.
-5. Compare each durable signal against nearby rules. Prefer, in order:
-
-   - no change;
-   - attach supporting or challenging evidence;
-   - narrow or expand a candidate;
-   - add a candidate;
-   - propose a human decision in the result.
-
-   Change at most five canonical rule files.
-6. Store the complete direct-user-message source span in
-   `episode_source_keys`, then derive the stable episode ID:
+7. Advance the cursor after either a successful commit or a no-change decision,
+   using the newest message from the scan:
 
    ```bash
-   python3 <root>/scripts/doctrine.py episode-id \
-     --thread-id <thread-id> \
-     --source-key <source-key>
+   python3 scripts/scan-history.py advance \
+     --created-at <created-at> --segment-id <segment-id>
    ```
 
-   Repeat `--source-key` in source order for a multi-message episode. Automated
-   evidence must have a nonempty bb thread and source-key locator. Existing
-   `published_summary` evidence is immutable; external evidence requires human
-   review.
-7. Store minimal summaries, exact local source locators, content hashes, and a
-   typed `doctrine_version_seen` value:
-
-   - `pre-doctrine` only for evidence predating the initial doctrine;
-   - `unseen` only when no doctrine-guided agent or artifact was involved;
-   - `unknown` when influence cannot be established;
-   - `sha256:<corpus>` when the agent or artifact used that doctrine version.
-
-   `unknown` and corpus-hash evidence may not increase independent recurrence.
-   Do not copy transcripts, credentials, private URLs, or irrelevant paths.
-8. After changing evidence, replace `confidence.basis` with the exact output of:
-
-   ```bash
-   python3 <root>/scripts/doctrine.py basis --rule-id <rule-id>
-   ```
-
-9. Validate and rebuild:
-
-   ```bash
-   python3 <root>/scripts/doctrine.py validate
-   python3 <root>/scripts/doctrine.py verify-evidence
-   python3 <root>/scripts/doctrine.py build
-   ```
-
-10. If a rule changed, run at most two fresh readonly smoke-test threads: one
-    realistic design/review prompt and one near miss. Inspect the transcripts,
-    not only final output. Do not let test agents edit files.
-11. Follow any applicable local skill-change reporting instructions. Do not
-    create a report-only thread or edit app-owned sidecars.
-12. Record the run atomically using the lease ID, exact cursor, scan fingerprint,
-    final corpus hash, counts, and every changed rule ID:
-
-    ```bash
-    python3 <root>/scripts/doctrine.py record-run \
-      --lease-id <lease-id> \
-      --result <updated|no-change> \
-      --cursor-created-at <cursor-created-at> \
-      --cursor-segment-id <cursor-segment-id> \
-      --scanned <count> \
-      --added <count> \
-      --updated <count> \
-      --contested 0 \
-      --evidence-hash <scan-evidence-sha256> \
-      --expected-corpus-hash <final-corpus-sha256> \
-      --changed-rule-id <id> \
-      --note "<short result>"
-    ```
-
-    Repeat `--changed-rule-id` once per changed rule and omit it for no change.
-    On failure, revert rule changes before recording `--result failed`; never
-    advance the cursor after failed validation or smoke tests.
-
-## Result
-
-Report whether doctrine changed, rules or evidence added, human decisions
-proposed, validation and smoke-test outcomes, and the new cursor and corpus
-hash. Keep no-change runs concise.
+Report what changed, anything left conflicted and the question it needs, and the
+rule count. Keep no-change runs to one sentence.

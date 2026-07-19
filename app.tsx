@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   definePluginApp,
   useBbNavigate,
@@ -12,42 +6,19 @@ import {
   useRpc,
 } from "@bb/plugin-sdk/app";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "./components/ui/dialog";
-import { Button } from "./components/ui/button";
-import { Icon } from "./components/ui/icon";
-import { Input } from "./components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./components/ui/select";
-import { RuleVisual } from "./rule-visual";
-import type {
-  DoctrineRule,
-  LibraryPayload,
-  rpcContract,
-} from "./server";
-import { libraryStyles } from "./library-styles";
+import type { DoctrineRule, LibraryPayload, rpcContract } from "./server";
 import "./library.css";
 
-type LifecycleFilter = "all" | "active" | "candidate" | "other";
-type DomainFilter = "all" | string;
+type StatusFilter = "active" | "all" | "inactive";
 
-function ruleSubPath(id: string): string {
+function rulePath(id: string): string {
   return `rule/${encodeURIComponent(id)}`;
 }
 
-function idFromSubPath(subPath: string): string | null {
-  if (!subPath.startsWith("rule/")) return null;
+function ruleIdFromPath(path: string): string | null {
+  if (!path.startsWith("rule/")) return null;
   try {
-    return decodeURIComponent(subPath.slice("rule/".length)) || null;
+    return decodeURIComponent(path.slice(5)) || null;
   } catch {
     return null;
   }
@@ -57,89 +28,48 @@ function searchableText(rule: DoctrineRule): string {
   return [
     rule.id,
     rule.title,
+    rule.statement,
+    rule.why,
     rule.kind,
     rule.strength,
-    rule.statement,
-    rule.rationale,
-    rule.classification.primary,
-    ...rule.classification.secondary,
-    ...rule.classification.pattern_categories,
-    ...rule.applicability.products,
-    ...rule.applicability.activities,
-    ...rule.applicability.artifacts,
-    ...rule.applicability.surfaces,
-    ...rule.applicability.contexts,
-    ...rule.applicability.when,
-    ...rule.applicability.not_when,
-    ...rule.guidance.prefer,
-    ...rule.guidance.avoid,
-    ...rule.retrieval.keywords,
-    ...rule.retrieval.aliases,
-    ...rule.retrieval.positive_examples,
-    ...rule.retrieval.negative_examples,
-    ...rule.verification.checks,
-    ...rule.evidence.map((item) => item.summary),
+    rule.confidence,
+    rule.domain,
+    ...rule.products,
+    ...rule.activities,
+    ...rule.artifacts,
+    ...rule.surfaces,
+    ...rule.prefer,
+    ...rule.avoid,
+    ...rule.use_when,
+    ...rule.not_when,
+    ...rule.exceptions,
+    ...rule.evidence,
+    ...rule.checks,
   ]
     .join("\n")
     .toLocaleLowerCase();
 }
 
-function StatusPill({ status }: { status: string }) {
-  return (
-    <span className={`dd-pill dd-pill--${status}`}>
-      <span className="dd-pill__dot" aria-hidden="true" />
-      {status}
-    </span>
-  );
-}
-
-function RuleCard({
-  rule,
-  onOpen,
-}: {
-  rule: DoctrineRule;
-  onOpen: (id: string) => void;
-}) {
-  const leaf = rule.classification.primary.split(".")[1] ?? "general";
+function RuleCard({ rule, onOpen }: { rule: DoctrineRule; onOpen: () => void }) {
   return (
     <article className="dd-card">
-      <RuleVisual rule={rule} />
-      <div className="dd-card__body">
-        <div className="dd-card__meta">
-          <span>{leaf}</span>
-          <StatusPill status={rule.lifecycle.status} />
-        </div>
+      <button type="button" className="dd-card__button" onClick={onOpen}>
+        <span className="dd-card__domain">{rule.domain}</span>
         <h2>{rule.title}</h2>
         <p>{rule.statement}</p>
-        <div className="dd-card__footer">
-          <span>{rule.kind}</span>
-          <span>{rule.strength}</span>
-          <code>{rule.id}</code>
-        </div>
-      </div>
-      <button
-        type="button"
-        className="dd-card__trigger"
-        aria-label={`View ${rule.title}`}
-        data-rule-id={rule.id}
-        onClick={() => onOpen(rule.id)}
-      />
+        <span className="dd-card__meta">
+          {rule.strength} · {rule.confidence} confidence
+          {rule.status === "active" ? "" : ` · ${rule.status}`}
+        </span>
+      </button>
     </article>
   );
 }
 
-function ListBlock({
-  title,
-  items,
-  tone,
-}: {
-  title: string;
-  items: string[];
-  tone?: "positive" | "negative";
-}) {
+function ListSection({ title, items }: { title: string; items: string[] }) {
   if (!items.length) return null;
   return (
-    <section className={`dd-detail-block${tone ? ` dd-detail-block--${tone}` : ""}`}>
+    <section>
       <h3>{title}</h3>
       <ul>
         {items.map((item) => (
@@ -159,142 +89,86 @@ function RuleInspector({
   requestedId: string | null;
   onClose: () => void;
 }) {
+  useEffect(() => {
+    if (!requestedId) return;
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose, requestedId]);
+
+  if (!requestedId) return null;
+
   return (
-    <Dialog
-      open={Boolean(requestedId)}
-      onOpenChange={(open) => {
-        if (!open && requestedId) onClose();
-      }}
-    >
-      <DialogContent
-        className={`dd-inspector${rule ? "" : " dd-inspector--missing"}`}
+    <div className="dd-overlay" role="presentation" onMouseDown={onClose}>
+      <article
+        className="dd-inspector"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dd-inspector-title"
+        onMouseDown={(event) => event.stopPropagation()}
       >
+        <button
+          type="button"
+          className="dd-icon-button dd-inspector__close"
+          aria-label="Close rule"
+          title="Close"
+          onClick={onClose}
+        >
+          ×
+        </button>
         {rule ? (
-          <>
-            <RuleVisual rule={rule} inspector />
-            <header className="dd-inspector__header">
-              <div className="dd-inspector__kicker">
-                <span>{rule.classification.primary}</span>
-                <StatusPill status={rule.lifecycle.status} />
-              </div>
-              <DialogTitle>{rule.title}</DialogTitle>
-              <DialogDescription>{rule.statement}</DialogDescription>
-              {rule.lifecycle.status !== "active" ? (
-                <div className="dd-candidate-note">
-                  <Icon name="Info" aria-hidden="true" />
-                  Candidate rules are preserved for review but do not guide
-                  work until explicitly approved.
-                </div>
+          <div className="dd-inspector__scroll">
+            <header>
+              <span className="dd-card__domain">{rule.domain}</span>
+              <h2 id="dd-inspector-title">{rule.title}</h2>
+              <p className="dd-statement">{rule.statement}</p>
+              {rule.status !== "active" ? (
+                <p className="dd-status-note">
+                  {rule.status === "conflicted"
+                    ? "This rule is paused because explicit preferences conflict."
+                    : "This rule is kept for history and no longer guides work."}
+                </p>
               ) : null}
             </header>
 
-            <div className="dd-inspector__content">
-              <section className="dd-rationale">
-                <h3>Why this exists</h3>
-                <p>{rule.rationale}</p>
-              </section>
+            <section>
+              <h3>Why</h3>
+              <p>{rule.why}</p>
+            </section>
 
-              <div className="dd-guidance-grid">
-                <ListBlock
-                  title="Prefer"
-                  items={rule.guidance.prefer}
-                  tone="positive"
-                />
-                <ListBlock
-                  title="Avoid"
-                  items={rule.guidance.avoid}
-                  tone="negative"
-                />
-              </div>
-
-              <div className="dd-guidance-grid">
-                <ListBlock title="Use when" items={rule.applicability.when} />
-                <ListBlock
-                  title="Not when"
-                  items={rule.applicability.not_when}
-                />
-              </div>
-
-              {rule.exceptions.length ? (
-                <section className="dd-detail-block">
-                  <h3>Exceptions</h3>
-                  <div className="dd-exceptions">
-                    {rule.exceptions.map((exception) => (
-                      <article key={exception.id}>
-                        <strong>{exception.condition}</strong>
-                        <p>{exception.use_instead}</p>
-                        <small>{exception.rationale}</small>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              <ListBlock
-                title="Review checks"
-                items={rule.verification.checks}
-              />
-
-              <section className="dd-detail-block">
-                <h3>Evidence</h3>
-                <div className="dd-evidence">
-                  {rule.evidence.map((evidence) => (
-                    <article key={evidence.id}>
-                      <p>{evidence.summary}</p>
-                      <code>
-                        {evidence.source.type === "published_summary"
-                          ? "Published evidence summary"
-                          : evidence.source.thread_id
-                            ? `${evidence.source.thread_id}/${evidence.source.source_keys.join(",")}`
-                            : evidence.source.type}
-                      </code>
-                    </article>
-                  ))}
-                </div>
-              </section>
-
-              <dl className="dd-metadata">
-                <div>
-                  <dt>ID</dt>
-                  <dd>{rule.id}</dd>
-                </div>
-                <div>
-                  <dt>Kind</dt>
-                  <dd>{rule.kind}</dd>
-                </div>
-                <div>
-                  <dt>Strength</dt>
-                  <dd>{rule.strength}</dd>
-                </div>
-                <div>
-                  <dt>Confidence</dt>
-                  <dd>{rule.confidence.level}</dd>
-                </div>
-                <div>
-                  <dt>Reviewed</dt>
-                  <dd>{rule.lifecycle.last_reviewed_at ?? "Not reviewed"}</dd>
-                </div>
-                <div>
-                  <dt>Canonical source</dt>
-                  <dd>
-                    <code>{rule.canonical_path}</code>
-                  </dd>
-                </div>
-              </dl>
+            <div className="dd-inspector__columns">
+              <ListSection title="Prefer" items={rule.prefer} />
+              <ListSection title="Avoid" items={rule.avoid} />
             </div>
-          </>
-        ) : requestedId ? (
-          <div className="dd-empty">
-            <DialogTitle>Rule not found</DialogTitle>
-            <DialogDescription>
-              {requestedId} does not match a current doctrine rule.
-            </DialogDescription>
+            <div className="dd-inspector__columns">
+              <ListSection title="Use when" items={rule.use_when} />
+              <ListSection title="Do not use when" items={rule.not_when} />
+            </div>
+
+            <ListSection title="Exceptions" items={rule.exceptions} />
+            <ListSection title="Evidence" items={rule.evidence} />
+            <ListSection title="Check" items={rule.checks} />
+
+            <dl className="dd-facts">
+              <div><dt>ID</dt><dd>{rule.id}</dd></div>
+              <div><dt>Kind</dt><dd>{rule.kind}</dd></div>
+              <div><dt>Strength</dt><dd>{rule.strength}</dd></div>
+              <div><dt>Confidence</dt><dd>{rule.confidence}</dd></div>
+              <div><dt>Evidence</dt><dd>{rule.supporting_episodes} supporting · {rule.challenging_episodes} challenging</dd></div>
+              <div><dt>Updated</dt><dd>{rule.updated}</dd></div>
+              <div><dt>Source</dt><dd><code>{rule.canonical_path}</code></dd></div>
+            </dl>
           </div>
         ) : (
-          <DialogTitle className="sr-only">Rule inspector</DialogTitle>
+          <div className="dd-inspector__missing">
+            <h2 id="dd-inspector-title">Rule not found</h2>
+            <p>{requestedId} is not in this doctrine.</p>
+          </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </article>
+    </div>
   );
 }
 
@@ -305,23 +179,18 @@ function DoctrineLibrary({ subPath }: { subPath: string }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [lifecycle, setLifecycle] = useState<LifecycleFilter>("active");
-  const [domain, setDomain] = useState<DomainFilter>("all");
-  const openedFromGallery = useRef(false);
-  const requestedId = idFromSubPath(subPath);
+  const [domain, setDomain] = useState("all");
+  const [status, setStatus] = useState<StatusFilter>("active");
+  const openedFromLibrary = useRef(false);
+  const requestedId = ruleIdFromPath(subPath);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const next = await rpc.call("getLibrary");
-      setLibrary(next);
+      setLibrary(await rpc.call("getLibrary"));
       setError(null);
     } catch (nextError) {
-      setError(
-        nextError instanceof Error
-          ? nextError.message
-          : "Could not load the doctrine repository.",
-      );
+      setError(nextError instanceof Error ? nextError.message : String(nextError));
     } finally {
       setLoading(false);
     }
@@ -331,176 +200,88 @@ function DoctrineLibrary({ subPath }: { subPath: string }) {
     void load();
   }, [load]);
 
-  useRealtime("corpus-changed", () => {
+  useRealtime("rules-changed", () => {
     void load();
   });
 
   const results = useMemo(() => {
     if (!library) return [];
-    const terms = query
-      .trim()
-      .toLocaleLowerCase()
-      .split(/\s+/)
-      .filter(Boolean);
+    const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
     return library.rules.filter((rule) => {
-      const statusMatches =
-        lifecycle === "all" ||
-        (lifecycle === "other"
-          ? !["active", "candidate"].includes(rule.lifecycle.status)
-          : rule.lifecycle.status === lifecycle);
-      const domainMatches =
-        domain === "all" ||
-        rule.classification.primary.startsWith(`${domain}.`);
-      if (!statusMatches || !domainMatches) return false;
+      if (domain !== "all" && !rule.domain.startsWith(`${domain}.`)) return false;
+      if (status === "active" && rule.status !== "active") return false;
+      if (status === "inactive" && rule.status === "active") return false;
       if (!terms.length) return true;
       const text = searchableText(rule);
       return terms.every((term) => text.includes(term));
     });
-  }, [domain, library, lifecycle, query]);
+  }, [domain, library, query, status]);
 
-  const selectedRule =
-    library?.rules.find((rule) => rule.id === requestedId) ?? null;
-
-  function openRule(id: string) {
-    openedFromGallery.current = true;
-    navigate.toPluginPanel("library", { subPath: ruleSubPath(id) });
-  }
-
-  function closeRule() {
-    if (openedFromGallery.current) {
-      openedFromGallery.current = false;
+  const closeInspector = useCallback(() => {
+    if (openedFromLibrary.current) {
+      openedFromLibrary.current = false;
       window.history.back();
       return;
     }
     navigate.toPluginPanel("library", { subPath: "", replace: true });
-  }
+  }, [navigate]);
+
+  const selectedRule = library?.rules.find((rule) => rule.id === requestedId) ?? null;
 
   return (
-    <main className="dd-shell">
-      <style>{libraryStyles}</style>
-      <section className="dd-toolbar" aria-label="Filter doctrine">
-        <div className="dd-search">
-          <Icon
-            name="Search"
-            className="dd-search__icon"
-            aria-hidden="true"
-          />
-          <Input
-            type="search"
-            aria-label="Search doctrine"
-            placeholder="Search principles, evidence, contexts…"
-            value={query}
-            onChange={(event) => setQuery(event.currentTarget.value)}
-          />
-        </div>
-
-        <div className="dd-control">
-          <span id="dd-domain-label">Domain</span>
-          <Select value={domain} onValueChange={setDomain}>
-            <SelectTrigger aria-labelledby="dd-domain-label">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All domains</SelectItem>
-              {library?.taxonomy.roots.map((root) => (
-                <SelectItem key={root.id} value={root.id}>
-                  {root.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="dd-control">
-          <span id="dd-lifecycle-label">Lifecycle</span>
-          <Select
-            value={lifecycle}
-            onValueChange={(value) =>
-              setLifecycle(value as LifecycleFilter)
-            }
-          >
-            <SelectTrigger aria-labelledby="dd-lifecycle-label">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All lifecycle states</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="candidate">Candidates</SelectItem>
-              <SelectItem value="other">Other states</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="dd-toolbar__status">
-          {library?.git.available ? (
-            <span
-              className={`dd-git${library.git.dirty ? " dd-git--dirty" : ""}`}
-              title={
-                library.git.dirty
-                  ? `${library.git.changed_files} uncommitted file changes`
-                  : "Canonical doctrine repository is clean"
-              }
-            >
-              <Icon name="GitBranch" aria-hidden="true" />
-              {library.git.branch ?? "detached"}
-              <code>{library.git.commit}</code>
-              {library.git.dirty ? <i>dirty</i> : null}
-            </span>
-          ) : null}
-          <span title="Refresh doctrine">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="dd-refresh"
-              aria-label="Refresh doctrine"
-              disabled={loading}
-              onClick={() => void load()}
-            >
-              <Icon
-                name={loading ? "Loading" : "RotateCcw"}
-                className={loading ? "dd-spin" : undefined}
-                aria-hidden="true"
-              />
-            </Button>
-          </span>
-        </div>
-
-        <p className="dd-result-count" role="status" aria-live="polite">
-          {results.length} {results.length === 1 ? "rule" : "rules"}
-        </p>
+    <main className="dd-library">
+      <section className="dd-toolbar" aria-label="Filter design doctrine">
+        <input
+          type="search"
+          aria-label="Search doctrine"
+          placeholder="Search rules…"
+          value={query}
+          onChange={(event) => setQuery(event.currentTarget.value)}
+        />
+        <select aria-label="Domain" value={domain} onChange={(event) => setDomain(event.currentTarget.value)}>
+          <option value="all">All domains</option>
+          {library?.domains.map((item) => <option key={item} value={item}>{item}</option>)}
+        </select>
+        <select aria-label="Status" value={status} onChange={(event) => setStatus(event.currentTarget.value as StatusFilter)}>
+          <option value="active">Current</option>
+          <option value="all">All</option>
+          <option value="inactive">Conflicted or retired</option>
+        </select>
+        <button
+          type="button"
+          className="dd-icon-button"
+          title="Refresh"
+          aria-label="Refresh doctrine"
+          disabled={loading}
+          onClick={() => void load()}
+        >
+          ↻
+        </button>
+        <span className="dd-count" role="status">{results.length} {results.length === 1 ? "rule" : "rules"}</span>
       </section>
 
       {error ? (
-        <div className="dd-empty">
-          <strong>Doctrine unavailable</strong>
-          <p>{error}</p>
-          <Button variant="outline" size="sm" onClick={() => void load()}>
-            Retry
-          </Button>
-        </div>
+        <div className="dd-empty"><strong>Could not load doctrine</strong><p>{error}</p><button type="button" onClick={() => void load()}>Retry</button></div>
       ) : loading && !library ? (
-        <div className="dd-loading" aria-label="Loading doctrine">
-          <Icon name="Loading" className="dd-spin" aria-hidden="true" />
-        </div>
+        <div className="dd-empty">Loading…</div>
       ) : results.length ? (
-        <section className="dd-grid" aria-label="Doctrine rules">
+        <section className="dd-grid" aria-label="Design doctrine rules">
           {results.map((rule) => (
-            <RuleCard key={rule.id} rule={rule} onOpen={openRule} />
+            <RuleCard
+              key={rule.id}
+              rule={rule}
+              onOpen={() => {
+                openedFromLibrary.current = true;
+                navigate.toPluginPanel("library", { subPath: rulePath(rule.id) });
+              }}
+            />
           ))}
         </section>
       ) : (
-        <div className="dd-empty">
-          <strong>No rules found</strong>
-          <p>Try a different search or filter.</p>
-        </div>
+        <div className="dd-empty"><strong>No rules found</strong><p>Try a different search or filter.</p></div>
       )}
 
-      <RuleInspector
-        rule={selectedRule}
-        requestedId={requestedId}
-        onClose={closeRule}
-      />
+      <RuleInspector rule={selectedRule} requestedId={requestedId} onClose={closeInspector} />
     </main>
   );
 }

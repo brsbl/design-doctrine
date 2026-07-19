@@ -1,68 +1,40 @@
-import { createHash } from "node:crypto";
-
 import { describe, expect, it } from "vitest";
 
-import {
-  loadDoctrine,
-  searchDoctrine,
-} from "./server";
+import { loadDoctrine, searchDoctrine } from "./server";
 
-describe("design doctrine corpus", () => {
-  it("loads and types the canonical repository", async () => {
+describe("design doctrine library", () => {
+  it("loads the Markdown rules directly", async () => {
     const library = await loadDoctrine(process.cwd());
 
     expect(library.rules).toHaveLength(33);
-    expect(library.status_counts).toEqual({
-      active: 20,
-      candidate: 13,
-    });
-    expect(library.taxonomy.roots.map((root) => root.id)).toContain(
-      "interaction",
-    );
-    expect(
-      library.rules.every((rule) => rule.canonical_path.endsWith(".json")),
-    ).toBe(true);
+    expect(library.status_counts).toEqual({ active: 33 });
+    expect(new Set(library.rules.map((rule) => rule.id)).size).toBe(33);
+    expect(library.rules.every((rule) => rule.canonical_path.endsWith(".md"))).toBe(true);
+    expect(library.domains).toContain("interaction");
   });
 
-  it("searches all typed rule fields with AND semantics", async () => {
+  it("searches rule content with AND semantics", async () => {
     const library = await loadDoctrine(process.cwd());
     const results = searchDoctrine(library.rules, "compact utilities");
 
     expect(results.map((rule) => rule.id)).toContain("ddr_001");
   });
 
-  it("keeps candidate rules out of operative search by default", async () => {
+  it("uses scoped single-episode rules without an approval queue", async () => {
     const library = await loadDoctrine(process.cwd());
-    const operative = searchDoctrine(library.rules, "explicit click");
-    const historical = searchDoctrine(
-      library.rules,
-      "explicit click",
-      true,
-    );
+    const results = searchDoctrine(library.rules, "explicit click");
+    const rule = library.rules.find((item) => item.id === "ddr_011");
 
-    expect(operative.map((rule) => rule.id)).not.toContain("ddr_011");
-    expect(historical.map((rule) => rule.id)).toContain("ddr_011");
+    expect(results.map((item) => item.id)).toContain("ddr_011");
+    expect(rule?.status).toBe("active");
+    expect(rule?.confidence).toBe("medium");
   });
 
-  it("publishes evidence without private bb locators", async () => {
+  it("keeps published evidence free of private bb locators", async () => {
     const library = await loadDoctrine(process.cwd());
-    const published = library.rules.flatMap((rule) =>
-      rule.evidence.filter(
-        (evidence) => evidence.source.type === "published_summary",
-      ),
-    );
+    const evidence = library.rules.flatMap((rule) => rule.evidence).join("\n");
 
-    expect(published).toHaveLength(63);
-    for (const evidence of published) {
-      expect(evidence.source.thread_id).toMatch(/^published-context-\d{3}$/);
-      expect(evidence.source.project_id).toMatch(/^published-scope-\d{3}$/);
-      expect(evidence.source.source_keys).toEqual(
-        expect.arrayContaining([expect.stringMatching(/^published-signal-\d{3}$/)]),
-      );
-      expect(evidence.episode_id).toMatch(/^external:published:episode-\d{3}$/);
-      expect(evidence.content_sha256).toBe(
-        `sha256:${createHash("sha256").update(evidence.summary).digest("hex")}`,
-      );
-    }
+    expect(evidence).not.toMatch(/\b(?:thr|proj|env)_[a-z0-9_-]+\b/i);
+    expect(evidence).not.toContain("/Users/");
   });
 });

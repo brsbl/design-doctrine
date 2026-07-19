@@ -20,10 +20,6 @@
     "server.ts",
     "server.test.ts",
     "app.tsx",
-    "rule-visual.tsx",
-    "types",
-    "components",
-    "lib",
-    "hooks"
+    "types"
   ]
 }
