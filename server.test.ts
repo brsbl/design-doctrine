@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  detailRowEndIndex,
+  filterRules,
+  ruleIdFromPath,
+  rulePath,
+  toggledRulePath,
+} from "./app-logic";
 import { loadDoctrine, searchDoctrine } from "./server";
 
 describe("design doctrine library", () => {
@@ -36,5 +43,36 @@ describe("design doctrine library", () => {
 
     expect(evidence).not.toMatch(/\b(?:thr|proj|env)_[a-z0-9_-]+\b/i);
     expect(evidence).not.toContain("/Users/");
+  });
+
+  it("keeps every rule status visible in the library", async () => {
+    const library = await loadDoctrine(process.cwd());
+    const mixedStatuses = [
+      { ...library.rules[0], status: "active" as const },
+      { ...library.rules[1], status: "conflicted" as const },
+      { ...library.rules[2], status: "retired" as const },
+    ];
+
+    expect(filterRules(mixedStatuses, "all", "").map((rule) => rule.status)).toEqual([
+      "active",
+      "conflicted",
+      "retired",
+    ]);
+  });
+
+  it("places detail after the selected responsive grid row", () => {
+    expect(detailRowEndIndex(0, 8, 3)).toBe(2);
+    expect(detailRowEndIndex(4, 8, 3)).toBe(5);
+    expect(detailRowEndIndex(7, 8, 3)).toBe(7);
+    expect(detailRowEndIndex(4, 8, 2)).toBe(5);
+    expect(detailRowEndIndex(4, 8, 1)).toBe(4);
+  });
+
+  it("preserves deep links and collapses a selected rule", () => {
+    expect(rulePath("ddr_001")).toBe("rule/ddr_001");
+    expect(ruleIdFromPath("rule/ddr_001")).toBe("ddr_001");
+    expect(toggledRulePath(null, "ddr_001")).toBe("rule/ddr_001");
+    expect(toggledRulePath("ddr_001", "ddr_001")).toBe("");
+    expect(toggledRulePath("ddr_001", "ddr_002")).toBe("rule/ddr_002");
   });
 });

@@ -19,6 +19,7 @@
   "include": [
     "server.ts",
     "server.test.ts",
+    "app-logic.ts",
     "app.tsx",
     "types"
   ]
