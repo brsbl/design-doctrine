@@ -38,56 +38,56 @@ const DOMAIN_STYLES: Record<
   all: {
     idle: "border-border/60 bg-background/35 hover:border-foreground/15 hover:bg-background/55",
     selected: "border-foreground/20 bg-background/60 text-foreground ring-1 ring-foreground/8",
-    gradientIdle: "from-muted/10 hover:from-muted/20",
-    gradientSelected: "from-muted/20 hover:from-muted/30",
+    gradientIdle: "from-muted/15 hover:from-muted/25",
+    gradientSelected: "from-muted/25 hover:from-muted/35",
   },
   accessibility: {
     idle: "border-teal-500/10 bg-background/35 hover:border-teal-500/25 hover:bg-background/55",
     selected: "border-teal-500/30 bg-background/60 text-foreground ring-1 ring-teal-500/20",
-    gradientIdle: "from-teal-500/5 hover:from-teal-500/10",
-    gradientSelected: "from-teal-500/10 hover:from-teal-500/15",
+    gradientIdle: "from-teal-500/10 hover:from-teal-500/15",
+    gradientSelected: "from-teal-500/15 hover:from-teal-500/20",
   },
   ai: {
     idle: "border-violet-500/10 bg-background/35 hover:border-violet-500/25 hover:bg-background/55",
     selected: "border-violet-500/30 bg-background/60 text-foreground ring-1 ring-violet-500/20",
-    gradientIdle: "from-violet-500/5 hover:from-violet-500/10",
-    gradientSelected: "from-violet-500/10 hover:from-violet-500/15",
+    gradientIdle: "from-violet-500/10 hover:from-violet-500/15",
+    gradientSelected: "from-violet-500/15 hover:from-violet-500/20",
   },
   content: {
     idle: "border-amber-500/10 bg-background/35 hover:border-amber-500/25 hover:bg-background/55",
     selected: "border-amber-500/30 bg-background/60 text-foreground ring-1 ring-amber-500/20",
-    gradientIdle: "from-amber-500/5 hover:from-amber-500/10",
-    gradientSelected: "from-amber-500/10 hover:from-amber-500/15",
+    gradientIdle: "from-amber-500/10 hover:from-amber-500/15",
+    gradientSelected: "from-amber-500/15 hover:from-amber-500/20",
   },
   information: {
     idle: "border-sky-500/10 bg-background/35 hover:border-sky-500/25 hover:bg-background/55",
     selected: "border-sky-500/30 bg-background/60 text-foreground ring-1 ring-sky-500/20",
-    gradientIdle: "from-sky-500/5 hover:from-sky-500/10",
-    gradientSelected: "from-sky-500/10 hover:from-sky-500/15",
+    gradientIdle: "from-sky-500/10 hover:from-sky-500/15",
+    gradientSelected: "from-sky-500/15 hover:from-sky-500/20",
   },
   interaction: {
     idle: "border-indigo-500/10 bg-background/35 hover:border-indigo-500/25 hover:bg-background/55",
     selected: "border-indigo-500/30 bg-background/60 text-foreground ring-1 ring-indigo-500/20",
-    gradientIdle: "from-indigo-500/5 hover:from-indigo-500/10",
-    gradientSelected: "from-indigo-500/10 hover:from-indigo-500/15",
+    gradientIdle: "from-indigo-500/10 hover:from-indigo-500/15",
+    gradientSelected: "from-indigo-500/15 hover:from-indigo-500/20",
   },
   process: {
     idle: "border-orange-500/10 bg-background/35 hover:border-orange-500/25 hover:bg-background/55",
     selected: "border-orange-500/30 bg-background/60 text-foreground ring-1 ring-orange-500/20",
-    gradientIdle: "from-orange-500/5 hover:from-orange-500/10",
-    gradientSelected: "from-orange-500/10 hover:from-orange-500/15",
+    gradientIdle: "from-orange-500/10 hover:from-orange-500/15",
+    gradientSelected: "from-orange-500/15 hover:from-orange-500/20",
   },
   system: {
     idle: "border-lime-500/10 bg-background/35 hover:border-lime-500/25 hover:bg-background/55",
     selected: "border-lime-500/30 bg-background/60 text-foreground ring-1 ring-lime-500/20",
-    gradientIdle: "from-lime-500/5 hover:from-lime-500/10",
-    gradientSelected: "from-lime-500/10 hover:from-lime-500/15",
+    gradientIdle: "from-lime-500/10 hover:from-lime-500/15",
+    gradientSelected: "from-lime-500/15 hover:from-lime-500/20",
   },
   visual: {
     idle: "border-pink-500/10 bg-background/35 hover:border-pink-500/25 hover:bg-background/55",
     selected: "border-pink-500/30 bg-background/60 text-foreground ring-1 ring-pink-500/20",
-    gradientIdle: "from-pink-500/5 hover:from-pink-500/10",
-    gradientSelected: "from-pink-500/10 hover:from-pink-500/15",
+    gradientIdle: "from-pink-500/10 hover:from-pink-500/15",
+    gradientSelected: "from-pink-500/15 hover:from-pink-500/20",
   },
 };
 
@@ -185,8 +185,8 @@ function DomainIdentifierPill({
   const style = DOMAIN_STYLES[filterDomain] ?? DOMAIN_STYLES.all;
   const subdomainStyle =
     SUBDOMAIN_GRADIENT_STYLES[subdomainFromIdentifier(identifier)] ?? {
-      idle: "to-muted/10 hover:to-muted/20",
-      selected: "to-muted/20 hover:to-muted/30",
+      idle: "to-muted/15 hover:to-muted/25",
+      selected: "to-muted/25 hover:to-muted/35",
     };
   const label = displayDomainIdentifier(identifier);
   const gradientStyle = selected

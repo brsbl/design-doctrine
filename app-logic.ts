@@ -10,76 +10,76 @@ export const SUBDOMAIN_GRADIENT_STYLES: Record<
   IdentifierGradientStyle
 > = {
   operation: {
-    idle: "to-cyan-500/5 hover:to-cyan-500/10",
-    selected: "to-cyan-500/10 hover:to-cyan-500/15",
+    idle: "to-cyan-500/10 hover:to-cyan-500/15",
+    selected: "to-cyan-500/15 hover:to-cyan-500/20",
   },
   agency: {
-    idle: "to-rose-500/5 hover:to-rose-500/10",
-    selected: "to-rose-500/10 hover:to-rose-500/15",
+    idle: "to-rose-500/10 hover:to-rose-500/15",
+    selected: "to-rose-500/15 hover:to-rose-500/20",
   },
   context: {
-    idle: "to-sky-500/5 hover:to-sky-500/10",
-    selected: "to-sky-500/10 hover:to-sky-500/15",
+    idle: "to-sky-500/10 hover:to-sky-500/15",
+    selected: "to-sky-500/15 hover:to-sky-500/20",
   },
   instructions: {
-    idle: "to-yellow-500/5 hover:to-yellow-500/10",
-    selected: "to-yellow-500/10 hover:to-yellow-500/15",
+    idle: "to-yellow-500/10 hover:to-yellow-500/15",
+    selected: "to-yellow-500/15 hover:to-yellow-500/20",
   },
   terminology: {
-    idle: "to-orange-500/5 hover:to-orange-500/10",
-    selected: "to-orange-500/10 hover:to-orange-500/15",
+    idle: "to-orange-500/10 hover:to-orange-500/15",
+    selected: "to-orange-500/15 hover:to-orange-500/20",
   },
   density: {
-    idle: "to-blue-500/5 hover:to-blue-500/10",
-    selected: "to-blue-500/10 hover:to-blue-500/15",
+    idle: "to-blue-500/10 hover:to-blue-500/15",
+    selected: "to-blue-500/15 hover:to-blue-500/20",
   },
   hierarchy: {
-    idle: "to-indigo-500/5 hover:to-indigo-500/10",
-    selected: "to-indigo-500/10 hover:to-indigo-500/15",
+    idle: "to-indigo-500/10 hover:to-indigo-500/15",
+    selected: "to-indigo-500/15 hover:to-indigo-500/20",
   },
   organization: {
-    idle: "to-emerald-500/5 hover:to-emerald-500/10",
-    selected: "to-emerald-500/10 hover:to-emerald-500/15",
+    idle: "to-emerald-500/10 hover:to-emerald-500/15",
+    selected: "to-emerald-500/15 hover:to-emerald-500/20",
   },
   efficiency: {
-    idle: "to-lime-500/5 hover:to-lime-500/10",
-    selected: "to-lime-500/10 hover:to-lime-500/15",
+    idle: "to-lime-500/10 hover:to-lime-500/15",
+    selected: "to-lime-500/15 hover:to-lime-500/20",
   },
   feedback: {
-    idle: "to-pink-500/5 hover:to-pink-500/10",
-    selected: "to-pink-500/10 hover:to-pink-500/15",
+    idle: "to-pink-500/10 hover:to-pink-500/15",
+    selected: "to-pink-500/15 hover:to-pink-500/20",
   },
   input: {
-    idle: "to-teal-500/5 hover:to-teal-500/10",
-    selected: "to-teal-500/10 hover:to-teal-500/15",
+    idle: "to-teal-500/10 hover:to-teal-500/15",
+    selected: "to-teal-500/15 hover:to-teal-500/20",
   },
   navigation: {
-    idle: "to-purple-500/5 hover:to-purple-500/10",
-    selected: "to-purple-500/10 hover:to-purple-500/15",
+    idle: "to-purple-500/10 hover:to-purple-500/15",
+    selected: "to-purple-500/15 hover:to-purple-500/20",
   },
   handoff: {
-    idle: "to-amber-500/5 hover:to-amber-500/10",
-    selected: "to-amber-500/10 hover:to-amber-500/15",
+    idle: "to-amber-500/10 hover:to-amber-500/15",
+    selected: "to-amber-500/15 hover:to-amber-500/20",
   },
   validation: {
-    idle: "to-green-500/5 hover:to-green-500/10",
-    selected: "to-green-500/10 hover:to-green-500/15",
+    idle: "to-green-500/10 hover:to-green-500/15",
+    selected: "to-green-500/15 hover:to-green-500/20",
   },
   "design-system": {
-    idle: "to-fuchsia-500/5 hover:to-fuchsia-500/10",
-    selected: "to-fuchsia-500/10 hover:to-fuchsia-500/15",
+    idle: "to-fuchsia-500/10 hover:to-fuchsia-500/15",
+    selected: "to-fuchsia-500/15 hover:to-fuchsia-500/20",
   },
   color: {
-    idle: "to-red-500/5 hover:to-red-500/10",
-    selected: "to-red-500/10 hover:to-red-500/15",
+    idle: "to-red-500/10 hover:to-red-500/15",
+    selected: "to-red-500/15 hover:to-red-500/20",
   },
   imagery: {
-    idle: "to-violet-500/5 hover:to-violet-500/10",
-    selected: "to-violet-500/10 hover:to-violet-500/15",
+    idle: "to-violet-500/10 hover:to-violet-500/15",
+    selected: "to-violet-500/15 hover:to-violet-500/20",
   },
   layout: {
-    idle: "to-cyan-300/5 hover:to-cyan-300/10",
-    selected: "to-cyan-300/10 hover:to-cyan-300/15",
+    idle: "to-cyan-300/10 hover:to-cyan-300/15",
+    selected: "to-cyan-300/15 hover:to-cyan-300/20",
   },
 };
 
