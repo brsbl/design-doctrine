@@ -1,5 +1,7 @@
 # Design Doctrine
 
+> This standalone repository is retained for history. Active development moved to [`brsbl/bb-plugins`](https://github.com/brsbl/bb-plugins/tree/main/plugins/design-doctrine).
+
 Design Doctrine turns repeated product-design feedback into a set of rules, and
 applies them while you design, build, and review. It's a plugin for
 [bb](https://github.com/ymichael/bb): a panel for browsing the rules, a
@@ -14,7 +16,7 @@ Evidence, Check.
 ## Install
 
 ```bash
-bb plugin install git:https://github.com/brsbl/design-doctrine.git@main --yes
+bb plugin install git:https://github.com/brsbl/bb-plugins.git@plugin/design-doctrine --yes
 ```
 
 From a checkout: `npm ci && npm run build`, then
